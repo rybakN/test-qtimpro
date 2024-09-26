@@ -19,4 +19,7 @@ export default (): ConfigurationInterface => ({
   jwt: {
     secret: process.env.JWT_SECRET,
   },
+  bcrypt: {
+    rounds: parseInt(process.env.BCRYPT_ROUNDS) || 10,
+  },
 });
