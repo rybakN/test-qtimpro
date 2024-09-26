@@ -3,6 +3,7 @@ export interface ConfigurationInterface {
   database: DatabaseCredentials;
   redis: RedisCredentials;
   jwt: JwtCredentials;
+  bcrypt: BcryptCredentials;
 }
 
 type AppCredentials = {
@@ -25,4 +26,8 @@ type RedisCredentials = {
 
 type JwtCredentials = {
   secret: string;
+};
+
+type BcryptCredentials = {
+  rounds: number;
 };
