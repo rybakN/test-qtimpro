@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,6 +13,8 @@ import { UsersService } from '../../users/services/users.service';
 import { GetArticlesQueryDto } from '../dto/get-articles.query.dto';
 import { FindManyOptions } from 'typeorm/find-options/FindManyOptions';
 import { TimespanEnum } from '../types/timespan.enum';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ArticlesService {
@@ -19,6 +22,7 @@ export class ArticlesService {
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
     private readonly userService: UsersService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(
@@ -35,10 +39,20 @@ export class ArticlesService {
       author: user,
     });
 
-    return this.articleRepository.save(newArticle);
+    const article = await this.articleRepository.save(newArticle);
+    await this.cacheManager.reset();
+
+    return article;
   }
 
   async list(query: GetArticlesQueryDto): Promise<Article[]> {
+    const cacheKey = `articles:${JSON.stringify(query)}`;
+    const cachedArticles = await this.cacheManager.get<Article[]>(cacheKey);
+
+    if (cachedArticles) {
+      return cachedArticles;
+    }
+
     const { limit = 10, page = 1 } = query;
     const dateRange = this.createDateRange(query.timespan);
     const options: FindManyOptions<Article> = {
@@ -48,13 +62,12 @@ export class ArticlesService {
       },
       take: limit,
       skip: limit * (page - 1),
-      order: { publishedAt: 'DESC' },
     };
-    return this.articleRepository.find(options);
-  }
 
-  async show(id: number) {
-    return await this.articleRepository.findOneBy({ id });
+    const articles = await this.articleRepository.find(options);
+    await this.cacheManager.set(cacheKey, articles);
+
+    return articles;
   }
 
   async update(
@@ -70,11 +83,15 @@ export class ArticlesService {
       article,
       updateArticleDto,
     );
-    return await this.articleRepository.save(updatedArticle);
+    const savedArticle = await this.articleRepository.save(updatedArticle);
+    await this.cacheManager.reset();
+
+    return savedArticle;
   }
 
-  async remove(id: number): Promise<boolean> {
-    return Boolean(await this.articleRepository.delete(id));
+  async remove(id: number): Promise<void> {
+    await this.articleRepository.delete(id);
+    await this.cacheManager.reset();
   }
 
   private createDateRange(timespan: TimespanEnum): [Date, Date] | undefined {

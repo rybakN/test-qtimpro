@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
-import { RedisCacheService } from './services/redis-cache.service';
 
 @Module({
   imports: [
@@ -31,9 +30,8 @@ import { RedisCacheService } from './services/redis-cache.service';
           ttl: configService.get('redis.ttl'),
         }),
       }),
+      isGlobal: true,
     }),
   ],
-  providers: [RedisCacheService],
-  exports: [RedisCacheService],
 })
 export class CoreModule {}
