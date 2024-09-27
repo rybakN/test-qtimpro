@@ -15,12 +15,21 @@ export class UsersService {
     return plainToClass(User, this.userRepository.save(user));
   }
 
-  async findOne(id: number): Promise<User | null> {
+  async findOneByUsername(username: string): Promise<User | null> {
+    const user = await this.userRepository.findOneBy({ username });
+    if (!user) {
+      return user;
+    }
+
+    return user;
+  }
+
+  async findOneById(id: number): Promise<User | null> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return user;
     }
 
-    return plainToClass(User, user);
+    return user;
   }
 }
