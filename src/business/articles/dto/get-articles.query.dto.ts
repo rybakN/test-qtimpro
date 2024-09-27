@@ -4,17 +4,17 @@ import { TimespanEnum } from '../types/timespan.enum';
 export class GetArticlesQueryDto {
   @IsOptional()
   @IsNumberString()
-  limit: number;
+  limit?: number;
 
   @IsOptional()
   @IsNumberString()
-  page: number;
+  page?: number;
 
   @IsOptional()
   @IsString()
-  author: string;
+  author?: string;
 
   @IsOptional()
   @IsEnum(TimespanEnum)
-  timespan: TimespanEnum;
+  timespan?: TimespanEnum;
 }

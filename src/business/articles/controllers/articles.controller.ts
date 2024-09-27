@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -34,11 +36,6 @@ export class ArticlesController {
     return await this.articlesService.list(query);
   }
 
-  @Get(':id')
-  async show(@Param('id') id: string): Promise<Article> {
-    return await this.articlesService.show(+id);
-  }
-
   @JwtAuth()
   @Patch(':id')
   async update(
@@ -49,7 +46,8 @@ export class ArticlesController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<boolean> {
-    return await this.articlesService.remove(+id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.articlesService.remove(+id);
   }
 }
