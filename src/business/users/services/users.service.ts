@@ -24,12 +24,12 @@ export class UsersService {
     return user;
   }
 
-  async findOneById(id: number): Promise<User | null> {
+  async findOneById(id: number): Promise<Omit<User, 'password'> | null> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
       return user;
     }
 
-    return user;
+    return plainToClass(User, user);
   }
 }
