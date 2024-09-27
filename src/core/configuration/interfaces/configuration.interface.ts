@@ -26,8 +26,9 @@ type RedisCredentials = {
 
 type JwtCredentials = {
   secret: string;
+  expiresIn: string;
 };
 
 type BcryptCredentials = {
-  rounds: number;
+  hashRounds: number;
 };
