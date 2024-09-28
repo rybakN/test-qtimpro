@@ -21,6 +21,6 @@ export class Article {
   @CreateDateColumn({ type: 'timestamptz' })
   publishedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.id, { eager: true })
+  @ManyToOne(() => User, (user) => user.id)
   author: User;
 }

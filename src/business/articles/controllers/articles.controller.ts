@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -28,26 +29,31 @@ export class ArticlesController {
     @UserId() userId: number,
     @Body() createArticleDto: CreateArticleDto,
   ): Promise<Article> {
-    return await this.articlesService.create(userId, createArticleDto);
+    return this.articlesService.create(userId, createArticleDto);
   }
 
   @Get()
   async list(@Query() query: GetArticlesQueryDto): Promise<Article[]> {
-    return await this.articlesService.list(query);
+    return this.articlesService.list(query);
   }
 
   @JwtAuth()
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @UserId() userId: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateArticleDto: UpdateArticleDto,
   ): Promise<Article> {
-    return await this.articlesService.update(+id, updateArticleDto);
+    return this.articlesService.update(id, updateArticleDto, userId);
   }
 
+  @JwtAuth()
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.articlesService.remove(+id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @UserId() userId: number,
+  ): Promise<void> {
+    return this.articlesService.remove(id, userId);
   }
 }

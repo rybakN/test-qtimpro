@@ -6,15 +6,14 @@ import {
 } from '@nestjs/common';
 import { CreateArticleDto } from '../dto/create-article.dto';
 import { UpdateArticleDto } from '../dto/update-article.dto';
+import { GetArticlesQueryDto } from '../dto/get-articles.query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Article } from '../entities/article.entity';
 import { Between, Repository } from 'typeorm';
 import { UsersService } from '../../users/services/users.service';
-import { GetArticlesQueryDto } from '../dto/get-articles.query.dto';
 import { FindManyOptions } from 'typeorm/find-options/FindManyOptions';
 import { TimespanEnum } from '../types/timespan.enum';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class ArticlesService {
@@ -30,9 +29,10 @@ export class ArticlesService {
     createArticleDto: CreateArticleDto,
   ): Promise<Article> {
     const user = await this.userService.findOneById(userId);
-    if (!user) {
-      throw new ForbiddenException('Not right enough. User not found.');
-    }
+    if (!user)
+      throw new ForbiddenException(
+        'You do not have permission to create an article.',
+      );
 
     const newArticle = this.articleRepository.create({
       ...createArticleDto,
@@ -41,7 +41,6 @@ export class ArticlesService {
 
     const article = await this.articleRepository.save(newArticle);
     await this.cacheManager.reset();
-
     return article;
   }
 
@@ -53,59 +52,92 @@ export class ArticlesService {
       return cachedArticles;
     }
 
-    const { limit = 10, page = 1 } = query;
-    const dateRange = this.createDateRange(query.timespan);
-    const options: FindManyOptions<Article> = {
-      where: {
-        author: { username: query.author },
-        ...(dateRange && { publishedAt: Between(dateRange[0], dateRange[1]) }),
-      },
-      take: limit,
-      skip: limit * (page - 1),
-    };
-
+    const dateRange = this.calculateDateRange(query.timespan);
+    const options = this.createFindManyOptions(query, dateRange);
     const articles = await this.articleRepository.find(options);
-    await this.cacheManager.set(cacheKey, articles);
 
+    await this.cacheManager.set(cacheKey, articles);
     return articles;
   }
 
   async update(
     id: number,
     updateArticleDto: UpdateArticleDto,
+    userId: number,
   ): Promise<Article> {
-    const article = await this.articleRepository.findOneBy({ id });
-    if (!article) {
-      throw new NotFoundException('Article not found.');
+    const article = await this.articleRepository.findOne({
+      where: { id },
+      relations: ['author'],
+      select: {
+        author: {
+          id: true,
+          username: true,
+        },
+      },
+    });
+    if (!article) throw new NotFoundException('Article not found.');
+
+    if (article.author.id !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to update this article.',
+      );
     }
 
-    const updatedArticle = this.articleRepository.merge(
+    const mergedArticle = this.articleRepository.merge(
       article,
       updateArticleDto,
     );
-    const savedArticle = await this.articleRepository.save(updatedArticle);
+    const updatedArticle = await this.articleRepository.save(mergedArticle);
     await this.cacheManager.reset();
-
-    return savedArticle;
+    return updatedArticle;
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, userId: number): Promise<void> {
+    const article = await this.articleRepository.findOneBy({ id });
+    if (!article) throw new NotFoundException('Article not found.');
+
+    if (article.author.id !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to remove this article.',
+      );
+    }
+
     await this.articleRepository.delete(id);
     await this.cacheManager.reset();
   }
 
-  private createDateRange(timespan: TimespanEnum): [Date, Date] | undefined {
+  private calculateDateRange(timespan: TimespanEnum): [Date, Date] {
     const now = new Date();
 
     switch (timespan) {
       case TimespanEnum.DAY:
-        const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        return [dayAgo, now];
+        return [new Date(now.getTime() - 24 * 60 * 60 * 1000), now];
       case TimespanEnum.WEEK:
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        return [weekAgo, now];
+        return [new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), now];
       default:
-        return;
+        const exhaustiveCheck: never = timespan;
     }
+  }
+
+  private createFindManyOptions(
+    query: GetArticlesQueryDto,
+    dateRange: [Date, Date],
+  ): FindManyOptions<Article> {
+    const { limit = 10, page = 1 } = query;
+    return {
+      where: {
+        author: { username: query.author },
+        ...(dateRange && { publishedAt: Between(dateRange[0], dateRange[1]) }),
+      },
+      take: limit,
+      skip: limit * (page - 1),
+      relations: ['author'],
+      select: {
+        author: {
+          id: true,
+          username: true,
+        },
+      },
+    };
   }
 }
