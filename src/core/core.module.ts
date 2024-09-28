@@ -1,37 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
+import { getTypeOrmModuleAsyncOptions } from './options-functions/typeOrmModule-options.function';
+import { getCacheModuleOptions } from './options-functions/cacheModule-options.function';
 
 @Module({
   imports: [
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('database.host'),
-        port: configService.get('database.port'),
-        username: configService.get('database.username'),
-        password: configService.get('database.password'),
-        database: configService.get('database.database'),
-        autoLoadEntities: true,
-        synchronize: true,
-      }),
-    }),
-    CacheModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        store: await redisStore({
-          socket: {
-            host: configService.get('redis.host'),
-            port: configService.get('redis.port'),
-          },
-          ttl: configService.get('redis.ttl'),
-        }),
-      }),
-      isGlobal: true,
-    }),
+    TypeOrmModule.forRootAsync(getTypeOrmModuleAsyncOptions()),
+    CacheModule.registerAsync(getCacheModuleOptions()),
   ],
 })
 export class CoreModule {}

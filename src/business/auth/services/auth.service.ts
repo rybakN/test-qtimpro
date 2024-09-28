@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { AuthResponse } from '../types/auth-response.type';
-import { Payload } from '../types/payload.type';
 import { plainToClass } from 'class-transformer';
 import { CreateToken } from '../types/create-token.type';
 
@@ -37,8 +36,8 @@ export class AuthService {
     return this.createToken({ username: user.username, sub: user.id });
   }
 
-  async login(user: Payload): Promise<AuthResponse> {
-    return this.createToken({ username: user.username, sub: user.sub });
+  async login(user: Omit<User, 'password'>): Promise<AuthResponse> {
+    return this.createToken({ username: user.username, sub: user.id });
   }
 
   async validateUser(body: LoginDto): Promise<User | null> {
