@@ -46,7 +46,6 @@ describe('UsersService', () => {
         password: 'password123',
       } as User;
 
-      // Mocking repository methods
       userRepository.create.mockReturnValue(userEntity);
       userRepository.save.mockResolvedValue(savedUser);
 
