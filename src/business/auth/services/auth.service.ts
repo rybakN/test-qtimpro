@@ -22,7 +22,7 @@ export class AuthService {
     this.hashRounds = this.configService.get('bcrypt.hashRounds');
   }
 
-  async register(body: RegisterDto): Promise<AuthResponse> {
+  async register(body: RegisterDto): Promise<void> {
     const userExists = await this.usersService.findOneByUsername(body.username);
     if (userExists) {
       throw new ConflictException('User with this username already exists');
@@ -32,8 +32,6 @@ export class AuthService {
       ...body,
       password: hashPassword,
     });
-
-    return this.createToken({ username: user.username, sub: user.id });
   }
 
   async login(user: Omit<User, 'password'>): Promise<AuthResponse> {
