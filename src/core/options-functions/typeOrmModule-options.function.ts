@@ -1,6 +1,11 @@
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleAsyncOptions } from '@nestjs/typeorm/dist/interfaces/typeorm-options.interface';
 
+/**
+ * Generates JWT module options for the NestJS application.
+ *
+ * @returns {JwtModuleAsyncOptions} The JWT module options.
+ */
 export const getTypeOrmModuleAsyncOptions = (): TypeOrmModuleAsyncOptions => ({
   inject: [ConfigService],
   useFactory: (configService: ConfigService) => {

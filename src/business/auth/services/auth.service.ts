@@ -14,6 +14,13 @@ import { CreateToken } from '../types/create-token.type';
 export class AuthService {
   private readonly hashRounds: number;
 
+  /**
+   * Constructs a new AuthService.
+   *
+   * @param {UsersService} usersService - The service to manage user entities.
+   * @param {ConfigService} configService - The service to manage configuration settings.
+   * @param {JwtService} jwtService - The service to manage JWT tokens.
+   */
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
@@ -22,6 +29,13 @@ export class AuthService {
     this.hashRounds = this.configService.get('bcrypt.hashRounds');
   }
 
+  /**
+   * Registers a new user.
+   *
+   * @param {RegisterDto} body - The data transfer object containing registration details.
+   * @returns {Promise<void>} A promise that resolves when the user is registered.
+   * @throws {ConflictException} If a user with the given username already exists.
+   */
   async register(body: RegisterDto): Promise<void> {
     const userExists = await this.usersService.findOneByUsername(body.username);
     if (userExists) {
@@ -34,10 +48,22 @@ export class AuthService {
     });
   }
 
+  /**
+   * Logs in a user.
+   *
+   * @param {Omit<User, 'password'>} user - The user entity without the password.
+   * @returns {Promise<AuthResponse>} The authentication response containing the access token.
+   */
   async login(user: Omit<User, 'password'>): Promise<AuthResponse> {
     return this.createToken({ username: user.username, sub: user.id });
   }
 
+  /**
+   * Validates a user's credentials.
+   *
+   * @param {LoginDto} body - The data transfer object containing login details.
+   * @returns {Promise<User | null>} The user entity if validation is successful, or null if not.
+   */
   async validateUser(body: LoginDto): Promise<User | null> {
     const user = await this.usersService.findOneByUsername(body.username);
     if (user && (await bcrypt.compare(body.password, user.password))) {
@@ -46,10 +72,22 @@ export class AuthService {
     return null;
   }
 
+  /**
+   * Checks if a user exists by their username.
+   *
+   * @param {string} username - The username to check.
+   * @returns {Promise<boolean>} True if the user exists, false otherwise.
+   */
   async checkUserExists(username: string): Promise<boolean> {
     return Boolean(await this.usersService.findOneByUsername(username));
   }
 
+  /**
+   * Creates a JWT token.
+   *
+   * @param {CreateToken} payload - The payload to include in the token.
+   * @returns {AuthResponse} The authentication response containing the access token.
+   */
   private createToken(payload: CreateToken): AuthResponse {
     return { accessToken: this.jwtService.sign(payload) };
   }
