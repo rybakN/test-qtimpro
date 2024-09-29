@@ -216,20 +216,21 @@ describe('ArticlesService', () => {
         author: { id: userId, username: 'testuser' },
       };
 
-      (articleRepository.findOneBy as jest.Mock).mockResolvedValue(article);
+      (articleRepository.findOne as jest.Mock).mockResolvedValue(article);
       (articleRepository.delete as jest.Mock).mockResolvedValue(undefined);
 
       await service.remove(articleId, userId);
 
-      expect(articleRepository.findOneBy).toHaveBeenCalledWith({
-        id: articleId,
+      expect(articleRepository.findOne).toHaveBeenCalledWith({
+        where: { id: articleId },
+        relations: ['author'],
       });
       expect(articleRepository.delete).toHaveBeenCalledWith(articleId);
       expect(cacheManager.reset).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if article is not found', async () => {
-      (articleRepository.findOneBy as jest.Mock).mockResolvedValue(null);
+      (articleRepository.findOne as jest.Mock).mockResolvedValue(null);
 
       await expect(service.remove(articleId, userId)).rejects.toThrow(
         NotFoundException,
@@ -243,7 +244,7 @@ describe('ArticlesService', () => {
         author: { id: 2, username: 'otheruser' },
       };
 
-      (articleRepository.findOneBy as jest.Mock).mockResolvedValue(article);
+      (articleRepository.findOne as jest.Mock).mockResolvedValue(article);
 
       await expect(service.remove(articleId, userId)).rejects.toThrow(
         ForbiddenException,

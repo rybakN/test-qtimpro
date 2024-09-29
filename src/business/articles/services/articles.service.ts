@@ -17,6 +17,13 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class ArticlesService {
+  /**
+   * Constructs a new ArticlesService.
+   *
+   * @param {Repository<Article>} articleRepository - The repository for article entities.
+   * @param {UsersService} userService - The service to manage user entities.
+   * @param {Cache} cacheManager - The cache manager to handle caching.
+   */
   constructor(
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
@@ -24,6 +31,14 @@ export class ArticlesService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  /**
+   * Creates a new article.
+   *
+   * @param {number} userId - The ID of the user creating the article.
+   * @param {CreateArticleDto} createArticleDto - The data transfer object containing article creation details.
+   * @returns {Promise<Article>} The created article entity.
+   * @throws {ForbiddenException} If the user does not have permission to create an article.
+   */
   async create(
     userId: number,
     createArticleDto: CreateArticleDto,
@@ -44,6 +59,12 @@ export class ArticlesService {
     return article;
   }
 
+  /**
+   * Lists articles based on query parameters.
+   *
+   * @param {GetArticlesQueryDto} query - The query parameters for listing articles.
+   * @returns {Promise<Article[]>} The list of articles.
+   */
   async list(query: GetArticlesQueryDto): Promise<Article[]> {
     const cacheKey = `articles:${JSON.stringify(query)}`;
     const cachedArticles = await this.cacheManager.get<Article[]>(cacheKey);
@@ -60,6 +81,16 @@ export class ArticlesService {
     return articles;
   }
 
+  /**
+   * Updates an article.
+   *
+   * @param {number} id - The ID of the article to update.
+   * @param {UpdateArticleDto} updateArticleDto - The data transfer object containing article update details.
+   * @param {number} userId - The ID of the user updating the article.
+   * @returns {Promise<Article>} The updated article entity.
+   * @throws {NotFoundException} If the article is not found.
+   * @throws {ForbiddenException} If the user does not have permission to update the article.
+   */
   async update(
     id: number,
     updateArticleDto: UpdateArticleDto,
@@ -92,6 +123,15 @@ export class ArticlesService {
     return updatedArticle;
   }
 
+  /**
+   * Removes an article.
+   *
+   * @param {number} id - The ID of the article to remove.
+   * @param {number} userId - The ID of the user removing the article.
+   * @returns {Promise<void>} A promise that resolves when the article is removed.
+   * @throws {NotFoundException} If the article is not found.
+   * @throws {ForbiddenException} If the user does not have permission to remove the article.
+   */
   async remove(id: number, userId: number): Promise<void> {
     const article = await this.articleRepository.findOne({
       where: { id },
@@ -109,6 +149,12 @@ export class ArticlesService {
     await this.cacheManager.reset();
   }
 
+  /**
+   * Calculates the date range based on the given timespan.
+   *
+   * @param {TimespanEnum} timespan - The timespan to calculate the date range for.
+   * @returns {[Date, Date]} The calculated date range.
+   */
   private calculateDateRange(timespan: TimespanEnum): [Date, Date] {
     const now = new Date();
 
@@ -122,6 +168,13 @@ export class ArticlesService {
     }
   }
 
+  /**
+   * Creates the options for finding many articles based on the query and date range.
+   *
+   * @param {GetArticlesQueryDto} query - The query parameters for finding articles.
+   * @param {[Date, Date]} dateRange - The date range to filter articles by.
+   * @returns {FindManyOptions<Article>} The options for finding many articles.
+   */
   private createFindManyOptions(
     query: GetArticlesQueryDto,
     dateRange: [Date, Date],
