@@ -2,8 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
-import { AllExceptionsFilter } from './core/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
+import { AllExceptionsFilter } from './core/filters/all-exceptions.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -24,7 +24,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  const openApiPath = join(__dirname, '..', 'openApi', 'openapi.yaml');
+  const openApiPath = join(__dirname, '..', '..', 'openApi/openapi.yaml');
   const openApiDocument = YAML.parse(readFileSync(openApiPath, 'utf8'));
   const mergedDocument = {
     ...document,

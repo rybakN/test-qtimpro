@@ -21,8 +21,9 @@ export const getTypeOrmModuleAsyncOptions = (): TypeOrmModuleAsyncOptions => ({
       username: dbUsername,
       password: dbPassword,
       database: dbName,
-      autoLoadEntities: true,
-      synchronize: true,
+      synchronize: false,
+      entities: ['dist/src/**/*.entity.js'],
+      migrations: ['dist/src/migrations/*.js'],
     };
   },
 });
