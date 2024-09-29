@@ -19,9 +19,11 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migration:generate": "npm run typeorm -- migration:generate src/migrations/ArticleApiMigrations -d ormconfig.ts",
-    "migration:run": "npm run typeorm -- migration:run -d ormconfig.ts",
-    "migration:revert": "npm run typeorm -- migration:revert -d ormconfig.ts"
+    "migration:generate": "npm run typeorm -- migration:generate src/migrations/ArticleApiMigrations -d dist/ormconfig.js",
+    "migration:run": "npm run typeorm -- migration:run -d dist/ormconfig.js",
+    "migration:revert": "npm run typeorm -- migration:revert -d dist/ormconfig.js",
+    "docker-compose:up": "docker-compose up -d",
+    "docker-compose:down": "docker-compose down"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.2.2",
