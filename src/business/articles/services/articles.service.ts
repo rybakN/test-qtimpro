@@ -93,7 +93,10 @@ export class ArticlesService {
   }
 
   async remove(id: number, userId: number): Promise<void> {
-    const article = await this.articleRepository.findOneBy({ id });
+    const article = await this.articleRepository.findOne({
+      where: { id },
+      relations: ['author'],
+    });
     if (!article) throw new NotFoundException('Article not found.');
 
     if (article.author.id !== userId) {
